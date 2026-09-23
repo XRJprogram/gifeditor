@@ -392,7 +392,7 @@ class BlueprintCanvas {
     box.className = 'bp-node-params';
 
     if (node.type === 'input_emoji') {
-      const emojiId = node.params.emojiId || '14';
+      const emojiId = node.params.emojiId || '110';
       const info = window.QQEmojiService.getEmojiInfo(emojiId);
       const name = info ? info.name : `表情`;
       const thumb = window.QQEmojiService.getThumbnailUrl(emojiId);

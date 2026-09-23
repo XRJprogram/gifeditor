@@ -24,10 +24,10 @@ const NODE_DEFINITIONS = {
     inputs: [],
     outputs: [{ id: 'out_frames', name: '动图帧 (Frames)', type: 'frames' }],
     defaultParams: {
-      emojiId: '14' // 微笑
+      emojiId: '110' // 吓
     },
     async execute(inputs, params) {
-      const res = await window.QQEmojiService.loadEmojiFrames(params.emojiId || '14');
+      const res = await window.QQEmojiService.loadEmojiFrames(params.emojiId || '110');
       return { out_frames: res.frames };
     }
   },
