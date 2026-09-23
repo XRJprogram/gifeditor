@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QQ GIF editor - QQ 表情动图衍生工坊</title>
+  <title>GIF editor - 表情动图衍生工坊</title>
+  <link rel="icon" type="image/png" href="assets/qq_emoji/297.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/blueprint.css">
 </head>
@@ -12,14 +13,15 @@
   <!-- Top App Header -->
   <header class="app-header">
     <div class="logo-area">
-      <span class="logo-title">QQ GIF editor</span>
+      <img src="assets/qq_emoji/297.png" alt="拜谢" class="logo-icon">
+      <span class="logo-title">GIF editor</span>
       <span class="logo-tag">Node Graph</span>
     </div>
 
     <!-- Quick Preset Blueprints -->
     <div class="header-presets">
       <span style="font-size:11px; color:var(--text-muted); margin-right:4px;">预设方案:</span>
-      <button class="btn btn-sm" id="btnPresetMirror" title="微笑 -> 双对称镜像">双对称镜像</button>
+      <button class="btn btn-sm" id="btnPresetMirror" title="吓 -> 双对称镜像">双对称镜像</button>
       <button class="btn btn-sm" id="btnPresetMerge" title="微笑 + 发怒 -> 阴阳脸缝合">阴阳脸缝合</button>
       <button class="btn btn-sm" id="btnPresetBulge" title="笑哭 -> 大头膨胀 + 帧数约束">大头膨胀与约束</button>
     </div>
@@ -145,8 +147,8 @@
     <div class="drawer-modal">
       <div class="drawer-header">
         <div class="drawer-title">
-          <span>QQ 官方动态表情 (247)</span>
-          <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">数据源: QFace / QQNT (仅保留动图)</span>
+          <span>QQ 官方动态表情</span>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">数据源: QFace / QQNT (纯动态表情库)</span>
         </div>
         <button class="btn btn-sm btn-icon" id="btnCloseEmojiDrawer">x</button>
       </div>

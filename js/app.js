@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     graphModel.nodes.clear();
     graphModel.connections = [];
 
-    const inNode = graphModel.addNode('input_emoji', 80, 140, { emojiId: '14' });
+    const inNode = graphModel.addNode('input_emoji', 80, 140, { emojiId: '110' });
     const mirrorNode = graphModel.addNode('symmetry_dual', 400, 140, { keep: 'left' });
     const outNode = graphModel.addNode('output_export', 720, 140);
 

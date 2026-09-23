@@ -75,6 +75,14 @@ body {
   gap: 8px;
 }
 
+.logo-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  image-rendering: auto;
+  flex-shrink: 0;
+}
+
 .logo-title {
   font-size: 14px;
   font-weight: 700;

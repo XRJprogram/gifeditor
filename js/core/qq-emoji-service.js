@@ -3,6 +3,52 @@
  * Manages fetching, searching, and caching of QQNT animated emojis from QFace.
  */
 
+const SUPER_EMOJI_NAMES = {
+  '422': '彩虹 (超级表情)',
+  '423': '长城 (超级表情)',
+  '432': '隐藏款 (超级表情)',
+  '450': '撇嘴 (超级表情)',
+  '451': '色 (超级表情)',
+  '452': '微笑 (超级表情)',
+  '453': '发呆 (超级表情)',
+  '454': '酷 (超级表情)',
+  '455': '害羞 (超级表情)',
+  '456': '闭嘴 (超级表情)',
+  '457': '睡 (超级表情)',
+  '458': '我? (超级表情)',
+  '459': '优雅 (超级表情)',
+  '460': '等等 (超级表情)',
+  '461': '死机 (超级表情)',
+  '462': '无语 (超级表情)',
+  '463': '新年快乐',
+  '464': '飙车 (红马跑车)',
+  '465': '抢红包',
+  '466': '妖娆 (回眸一笑)',
+  '467': '洗剪吹 (托尼老师)',
+  '468': '暗中观察 (探头)',
+  '469': '男神嘘',
+  '470': '企鹅马头套',
+  '472': '心碎 (超级表情)',
+  '474': '出拳 (超级表情)',
+  '475': '干饭 (超级表情)',
+  '476': '老哥啥事 (超级表情)',
+  '477': '你懂的 (超级表情)',
+  '478': '对勾 (超级表情)',
+  '479': '叉叉 (超级表情)',
+  '480': '退退退 (超级表情)',
+  '481': '沉迷学习 (超级表情)',
+  '482': '融化 (超级表情)',
+  '483': '喵喵 (超级表情)',
+  '484': '比心 (超级表情)',
+  '485': '摸摸 (超级表情)',
+  '488': '老六 (超级表情)',
+  '489': '知识学杂了 (超级表情)',
+  '490': '能处 (超级表情)',
+  '491': '天秀 (超级表情)',
+  '492': '打量 (超级表情)',
+  '493': '起个大早 (超级表情)'
+};
+
 class QQEmojiService {
   constructor() {
     this.catalog = [];
@@ -34,19 +80,19 @@ class QQEmojiService {
         const res = await fetch(`${this.baseUrl}/assets/qq_emoji/_index.json`);
         const list = await res.json();
         this.catalog = list
-          .filter(e => {
-            const apng = e.assets && e.assets.find(a => a.type === 2);
-            return !!apng && e.describe && e.describe.trim().length > 0;
-          })
+          .filter(e => e.assets && e.assets.some(a => a.type === 2))
           .map(e => {
             const apng = e.assets.find(a => a.type === 2);
             const png = e.assets.find(a => a.type === 0);
+            const rawDesc = (e.describe || '').replace(/^\//, '').trim();
+            const name = rawDesc || SUPER_EMOJI_NAMES[e.emojiId] || `表情 #${e.emojiId}`;
             return {
               id: e.emojiId,
-              name: (e.describe || '').replace(/^\//, ''),
+              name,
               hasApng: true,
               apngPath: apng ? apng.path : null,
-              pngPath: png ? png.path : null
+              pngPath: png ? png.path : null,
+              isSuperEmoji: !rawDesc || !!SUPER_EMOJI_NAMES[e.emojiId]
             };
           });
       } catch (e2) {
@@ -63,12 +109,12 @@ class QQEmojiService {
 
   search(keyword) {
     if (!keyword || !keyword.trim()) {
-      return this.catalog.slice(0, 100);
+      return this.catalog;
     }
     const kw = keyword.trim().toLowerCase().replace(/^\//, '');
     return this.catalog.filter(e => 
       e.name.toLowerCase().includes(kw) || e.id === kw
-    ).slice(0, 100);
+    );
   }
 
   getEmojiInfo(id) {
@@ -78,14 +124,17 @@ class QQEmojiService {
   getThumbnailUrl(id) {
     const info = this.getEmojiInfo(id);
     if (!info) return '';
-    const localThumbs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '21', '49', '96', '104', '182', '212', '268', '277', '281', '305', '318', '324', '326'];
+    const localThumbs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '21', '49', '96', '104', '110', '182', '212', '268', '277', '281', '297', '305', '318', '324', '326', '452', '464', '466', '468', '475', '480', '488'];
     if (localThumbs.includes(String(id))) {
       return `assets/qq_emoji/${id}_thumb.png`;
     }
     if (info.pngPath) {
       return `${this.baseUrl}/${info.pngPath}`;
     }
-    return '';
+    if (info.apngPath) {
+      return `${this.baseUrl}/${info.apngPath}`;
+    }
+    return `${this.baseUrl}/assets/qq_emoji/${id}/png/${id}.png`;
   }
 
   /**
@@ -105,7 +154,7 @@ class QQEmojiService {
     const candidateUrls = [];
 
     // Try local asset first if downloaded locally
-    const localThumbs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '21', '49', '96', '104', '182', '212', '268', '277', '281', '305', '318', '324', '326'];
+    const localThumbs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '21', '49', '96', '104', '110', '182', '212', '268', '277', '281', '297', '305', '318', '324', '326', '452', '464', '466', '468', '475', '480', '488'];
     if (localThumbs.includes(strId)) {
       candidateUrls.push(`assets/qq_emoji/${strId}.png`);
     }
