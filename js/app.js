@@ -70,6 +70,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnModalCopyImage = document.getElementById('btnModalCopyImage');
   const btnModalCopyJson = document.getElementById('btnModalCopyJson');
 
+  if (imgExportPreview) {
+    imgExportPreview.draggable = true;
+    imgExportPreview.addEventListener('dragstart', (e) => {
+      const url = btnDownloadLink.href || imgExportPreview.src;
+      const filename = btnDownloadLink.download || `qq_gif_${Date.now()}.gif`;
+      if (url) {
+        e.dataTransfer.setData('DownloadURL', `image/gif:${filename}:${url}`);
+        e.dataTransfer.setData('text/uri-list', url);
+        e.dataTransfer.effectAllowed = 'copy';
+      }
+    });
+  }
+
   // Custom Confirm Clear Modal
   const confirmClearModal = document.getElementById('confirmClearModal');
   const btnCloseConfirmModal = document.getElementById('btnCloseConfirmModal');
@@ -272,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const curFrame = evaluatedFrames[currentPlayIndex] || evaluatedFrames[0];
       const pngBlob = await new Promise(resolve => curFrame.canvas.toBlob(resolve, 'image/png'));
 
-      // Convert GIF blob to Base64 Data URL for HTML clipboard insertion (QQ / WeChat standard)
+      // Convert GIF blob to Base64 Data URL for HTML clipboard insertion
       const base64DataUrl = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
@@ -280,55 +293,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         reader.readAsDataURL(gifBlob);
       });
 
-      const htmlContent = `<img src="${base64DataUrl}" alt="QQ GIF Editor" />`;
+      const htmlContent = `<img src="${base64DataUrl}" alt="QQ GIF" />`;
       const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
 
       let copied = false;
 
       // 1. Try modern Async Clipboard API
+      // Note: Never include 'image/png' fallback here, because Windows clipboard generates CF_DIB
+      // from PNG which strips alpha channel to black and makes QQ/WeChat paste a static image!
       if (navigator.clipboard && navigator.clipboard.write) {
-        // Attempt 1: All formats (native GIF + rich text HTML + fallback PNG)
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({
-              'image/gif': gifBlob,
-              'text/html': htmlBlob,
-              'image/png': pngBlob
-            })
-          ]);
-          copied = true;
-        } catch (e1) {
-          // Attempt 2: Chromium standard - text/html (animated GIF data URL) + image/png fallback
+        const supportsGif = typeof ClipboardItem !== 'undefined' &&
+                            typeof ClipboardItem.supports === 'function' &&
+                            ClipboardItem.supports('image/gif');
+
+        if (supportsGif) {
           try {
             await navigator.clipboard.write([
               new ClipboardItem({
-                'text/html': htmlBlob,
-                'image/png': pngBlob
+                'image/gif': gifBlob,
+                'text/html': htmlBlob
               })
             ]);
             copied = true;
-          } catch (e2) {
-            // Attempt 3: text/html only
-            try {
-              await navigator.clipboard.write([
-                new ClipboardItem({
-                  'text/html': htmlBlob
-                })
-              ]);
-              copied = true;
-            } catch (e3) {
-              // Attempt 4: image/gif only
-              try {
-                await navigator.clipboard.write([
-                  new ClipboardItem({
-                    'image/gif': gifBlob
-                  })
-                ]);
-                copied = true;
-              } catch (e4) {
-                console.warn('Clipboard write fallback needed:', e4);
-              }
-            }
+          } catch (eGif) {
+            console.warn('Native image/gif write failed:', eGif);
+          }
+        }
+
+        if (!copied) {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                'text/html': htmlBlob
+              })
+            ]);
+            copied = true;
+          } catch (eHtml) {
+            console.warn('text/html write failed:', eHtml);
           }
         }
       }
@@ -363,16 +364,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (copied) {
-        showToast('动图已复制到剪贴板，可直接在 QQ/微信中粘贴动图');
+        showToast('动图已写入剪贴板。若聊天软件粘贴受限，可直接按住动图【拖拽】进窗口发送');
       } else {
-        if (navigator.clipboard && navigator.clipboard.write) {
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': pngBlob })
-          ]);
-          showToast('已复制首帧图像（建议点击“下载 GIF”保存完整动图）');
-        } else {
-          showToast('剪贴板写入受限，请使用“下载 GIF 文件”');
-        }
+        showToast('剪贴板写入受限，请直接点击“下载 GIF 文件”或按住动图拖拽发送');
       }
     } catch (err) {
       console.error('复制动图出错:', err);

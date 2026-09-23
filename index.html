@@ -193,8 +193,11 @@
       </div>
 
       <div id="exportResultArea" style="display:none; flex-direction:column; gap:10px;">
-        <div style="width:100%; height:180px; background:#0d0e12; border:1px solid #272a34; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-          <img id="imgExportPreview" style="max-width:90%; max-height:90%; object-fit:contain;" alt="导出动图预览">
+        <div style="width:100%; height:180px; background:#0d0e12; border:1px dashed #38bdf8; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; position:relative; cursor:grab;" id="exportPreviewContainer" title="按住可直接拖拽动图到 QQ / 微信 发送">
+          <img id="imgExportPreview" style="max-width:85%; max-height:85%; object-fit:contain; pointer-events:auto;" alt="导出动图预览" draggable="true">
+          <div style="position:absolute; bottom:6px; font-size:11px; color:#38bdf8; background:rgba(13,16,23,0.88); padding:2px 10px; border-radius:10px; border:1px solid rgba(56,189,248,0.4); pointer-events:none;">
+            按住上方动图可直接拖拽进 QQ/微信 窗口发送
+          </div>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
           <span>文件体积: <b style="color:#f1f5f9;" id="lblExportFileSize">0 KB</b></span>
@@ -204,7 +207,7 @@
           <a class="btn btn-emerald" id="btnDownloadLink" download="qq_gif_editor.gif" style="flex:1; justify-content:center; text-decoration:none; padding:8px;">
             下载 GIF 文件
           </a>
-          <button class="btn btn-sm" id="btnModalCopyImage" style="flex:1; justify-content:center;" title="复制完整 GIF 动图到剪贴板，支持在 QQ/微信中直接粘贴动图">
+          <button class="btn btn-sm" id="btnModalCopyImage" style="flex:1; justify-content:center;" title="复制完整 GIF 富文本到剪贴板">
             复制动图到剪贴板
           </button>
         </div>
