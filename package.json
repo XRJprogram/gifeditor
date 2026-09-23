@@ -1,0 +1,28 @@
+{
+  "name": "gifeditor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build:bundle": "npx esbuild src_bundle/entry.js --bundle --minify --format=iife --global-name=GifEngineBundle --outfile=lib/gif-engine.bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XRJprogram/gifeditor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/XRJprogram/gifeditor/issues"
+  },
+  "homepage": "https://github.com/XRJprogram/gifeditor#readme",
+  "dependencies": {
+    "apng-js": "^1.1.5",
+    "gifenc": "^1.0.3",
+    "omggif": "^1.0.10"
+  }
+}

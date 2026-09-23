@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QQ GIF editor - QQ 表情动图衍生工坊</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/blueprint.css">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="logo-area">
+      <span class="logo-title">QQ GIF editor</span>
+      <span class="logo-tag">Node Graph</span>
+    </div>
+
+    <!-- Quick Preset Blueprints -->
+    <div class="header-presets">
+      <span style="font-size:11px; color:var(--text-muted); margin-right:4px;">预设方案:</span>
+      <button class="btn btn-sm" id="btnPresetMirror" title="微笑 -> 双对称镜像">双对称镜像</button>
+      <button class="btn btn-sm" id="btnPresetMerge" title="微笑 + 发怒 -> 阴阳脸缝合">阴阳脸缝合</button>
+      <button class="btn btn-sm" id="btnPresetBulge" title="笑哭 -> 大头膨胀 + 帧数约束">大头膨胀与约束</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="app-workspace">
+    <!-- Blueprint Node Graph Viewport -->
+    <section class="blueprint-viewport" id="blueprintContainer">
+      <!-- Floating Bottom Toolbar -->
+      <div class="bp-floating-bar">
+        <button class="bp-btn-pill primary" id="btnBarAddNode">
+          <span>添加节点</span>
+        </button>
+        <button class="bp-btn-pill" id="btnBarFitView" title="自适应画布所有节点">
+          <span>居中全图</span>
+        </button>
+        <button class="bp-btn-pill" id="btnBarReEval" title="重新计算所有节点">
+          <span>刷新计算</span>
+        </button>
+        <button class="bp-btn-pill" id="btnBarClear" title="清空蓝图画布">
+          <span>清空</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Inspector & Live Result Sidebar -->
+    <aside class="inspector-sidebar">
+      <div class="sidebar-header">
+        <span>实时预览与导出</span>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Live Animated Preview -->
+        <div class="live-preview-card">
+          <div class="preview-canvas-box">
+            <canvas id="previewCanvas" width="128" height="128"></canvas>
+          </div>
+
+          <div style="width:100%; display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-top:8px;">
+            <button class="btn btn-sm" id="btnStepPrev" title="上一帧" style="justify-content:center; padding:7px 0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+              </svg>
+            </button>
+            <button class="btn btn-sm btn-primary" id="btnPlayPause" title="暂停播放" style="justify-content:center; padding:7px 0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="iconPlayPause">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+              </svg>
+            </button>
+            <button class="btn btn-sm" id="btnStepNext" title="下一帧" style="justify-content:center; padding:7px 0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+              </svg>
+            </button>
+            <button class="btn btn-sm" id="btnCopyCurrentFrame" title="复制完整动图到剪贴板" style="justify-content:center; padding:7px 0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+            </button>
+          </div>
+
+          <div class="preview-meta">
+            <span id="lblPreviewSize">0 x 0</span>
+            <span id="lblPreviewFrames">0 frames</span>
+            <span id="lblPreviewDuration">0 ms</span>
+          </div>
+        </div>
+
+        <!-- Export Settings Card -->
+        <div class="card-box">
+          <div style="font-size:12px; font-weight:600; color:#f1f5f9; margin-bottom:10px;">
+            <span>导出设置</span>
+          </div>
+
+          <div class="control-row">
+            <span class="control-label">输出尺寸</span>
+            <select id="selectExportSize" style="width:145px;">
+              <option value="original" selected>原图 1:1</option>
+              <option value="240x240">240 x 240</option>
+              <option value="300x300">300 x 300</option>
+            </select>
+          </div>
+
+          <div class="control-row">
+            <span class="control-label">调色板颜色数</span>
+            <select id="selectExportColors" style="width:145px;">
+              <option value="128" selected>128 色</option>
+              <option value="256">256 色</option>
+              <option value="64">64 色</option>
+            </select>
+          </div>
+
+          <div class="control-row" style="margin-top:8px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="checkExportAlpha" checked>
+              <span class="control-label">保留透明通道 (Alpha)</span>
+            </label>
+          </div>
+
+          <button class="btn btn-emerald" id="btnDoExport" style="width:100%; justify-content:center; margin-top:12px; padding:9px; font-size:12px;">
+            导出为 GIF 动图
+          </button>
+
+          <!-- Pipeline JSON Actions -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:8px;">
+            <button class="btn btn-sm" id="btnDownloadJson" style="justify-content:center; font-size:11px;" title="导出当前蓝图操作序列为 JSON 文件">
+              导出序列 JSON
+            </button>
+            <label class="btn btn-sm" style="justify-content:center; font-size:11px; cursor:pointer;" title="导入此前保存的蓝图 JSON 文件">
+              <span>导入序列 JSON</span>
+              <input type="file" id="fileInputJson" accept=".json,application/json" style="display:none;">
+            </label>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- QQ Emoji Library Drawer Modal -->
+  <div class="drawer-backdrop" id="emojiDrawer">
+    <div class="drawer-modal">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <span>QQ 官方动态表情 (247)</span>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">数据源: QFace / QQNT (仅保留动图)</span>
+        </div>
+        <button class="btn btn-sm btn-icon" id="btnCloseEmojiDrawer">x</button>
+      </div>
+
+      <div class="drawer-search-bar">
+        <input type="text" class="drawer-search-input" id="inputEmojiSearch" placeholder="搜索表情名称，例如：微笑、发怒、滑稽、汪汪...">
+      </div>
+
+      <div class="drawer-emoji-grid" id="drawerEmojiGrid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Node Palette Modal -->
+  <div class="drawer-backdrop" id="nodePaletteModal">
+    <div class="node-palette-modal">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <span>添加功能节点</span>
+        </div>
+        <button class="btn btn-sm btn-icon" id="btnCloseNodePalette">x</button>
+      </div>
+
+      <div class="palette-category-list" id="paletteCategoryList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Dialog Modal -->
+  <div class="drawer-backdrop" id="exportModal">
+    <div class="export-dialog-box">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:14px; font-weight:600; color:#f1f5f9;">GIF 动图生成与导出</span>
+        <button class="btn btn-sm btn-icon" id="btnCloseExportModal">x</button>
+      </div>
+
+      <div id="exportProgressArea">
+        <p style="font-size:12px; color:var(--text-muted);" id="lblExportProgress">正在准备调色板与编码帧...</p>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="exportProgressBar"></div>
+        </div>
+      </div>
+
+      <div id="exportResultArea" style="display:none; flex-direction:column; gap:10px;">
+        <div style="width:100%; height:180px; background:#0d0e12; border:1px solid #272a34; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          <img id="imgExportPreview" style="max-width:90%; max-height:90%; object-fit:contain;" alt="导出动图预览">
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
+          <span>文件体积: <b style="color:#f1f5f9;" id="lblExportFileSize">0 KB</b></span>
+          <span id="lblWeChatStatus" style="color:#10b981;">符合表情标准 (&lt; 1MB)</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <a class="btn btn-emerald" id="btnDownloadLink" download="qq_gif_editor.gif" style="flex:1; justify-content:center; text-decoration:none; padding:8px;">
+            下载 GIF 文件
+          </a>
+          <button class="btn btn-sm" id="btnModalCopyImage" style="flex:1; justify-content:center;" title="复制完整 GIF 动图到剪贴板，支持在 QQ/微信中直接粘贴动图">
+            复制动图到剪贴板
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Confirm Clear Modal -->
+  <div class="drawer-backdrop" id="confirmClearModal">
+    <div class="confirm-dialog-box">
+      <div class="confirm-dialog-header">
+        <span class="confirm-dialog-title">清空画布确认</span>
+        <button class="btn btn-sm btn-icon" id="btnCloseConfirmModal">x</button>
+      </div>
+      <div class="confirm-dialog-body">
+        确定要清空蓝图画布上的全部节点与连线吗？此操作无法撤销。
+      </div>
+      <div class="confirm-dialog-actions">
+        <button class="btn btn-sm" id="btnCancelClear">取消</button>
+        <button class="btn btn-sm btn-danger" id="btnConfirmClear">确认清空</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast-notification"></div>
+
+  <!-- Scripts -->
+  <script src="lib/gif-engine.bundle.js"></script>
+  <script src="data/emoji_catalog.js"></script>
+  <script src="js/core/gif-decoder.js"></script>
+  <script src="js/core/gif-encoder.js"></script>
+  <script src="js/core/warp-engine.js"></script>
+  <script src="js/core/qq-emoji-service.js"></script>
+  <script src="js/core/function-library.js"></script>
+  <script src="js/modules/splice-manager.js"></script>
+  <script src="js/modules/effects.js"></script>
+  <script src="js/blueprint/node-definitions.js"></script>
+  <script src="js/blueprint/graph-model.js"></script>
+  <script src="js/blueprint/blueprint-canvas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

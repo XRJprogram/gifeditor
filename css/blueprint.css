@@ -1,0 +1,578 @@
+/* UE5 Blueprint Canvas & Node Graph Styling (High-Precision Theme) */
+
+.blueprint-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #111318;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+  background-position: 0 0;
+  user-select: none;
+  cursor: grab;
+}
+
+.blueprint-container.grabbing {
+  cursor: grabbing;
+}
+
+.blueprint-transform-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* SVG Wires Layer */
+.blueprint-wires-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10000px;
+  height: 10000px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.blueprint-wire {
+  fill: none;
+  stroke: #4f586b;
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  cursor: pointer;
+  pointer-events: stroke;
+  transition: stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.blueprint-wire:hover {
+  stroke: #38bdf8;
+  stroke-width: 3.5px;
+}
+
+.blueprint-wire-active {
+  stroke: #3b82f6;
+  stroke-width: 2.5px;
+}
+
+.blueprint-wire-drawing {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+/* Nodes Container */
+.blueprint-nodes-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+/* Individual Node */
+.bp-node {
+  position: absolute;
+  min-width: 230px;
+  max-width: 310px;
+  background-color: #171a23;
+  border: 1px solid #282e3e;
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.bp-node:hover {
+  border-color: #3d465c;
+}
+
+.bp-node.selected {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px #38bdf8, 0 12px 28px rgba(0, 0, 0, 0.65);
+}
+
+/* Node Header (Authentic UE5 Blueprint Header) */
+.bp-node-header {
+  padding: 9px 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.25) 100%), #1e222e;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: move;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top Category Accent Line */
+.bp-node-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--node-color, #475569);
+  box-shadow: 0 1px 6px var(--node-color, #475569);
+}
+
+/* Subtle Left Accent Wash */
+.bp-node-header::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--node-color, transparent) 0%, transparent 65%);
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.bp-node-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1;
+}
+
+.bp-node-title {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+.bp-node-subtitle {
+  font-size: 10px;
+  color: #8b95a8;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1px;
+}
+
+.bp-node-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 1;
+  transition: all 0.12s ease;
+}
+
+.bp-node-close:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* Node Body & Pins */
+.bp-node-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bp-pins-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.bp-pins-inputs,
+.bp-pins-outputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bp-pin {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 550;
+  color: #cbd5e1;
+  position: relative;
+}
+
+.bp-pin-output {
+  justify-content: flex-end;
+}
+
+/* Circular Pin Connector */
+.bp-pin-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #12141a;
+  border: 1.5px solid #64748b;
+  cursor: crosshair;
+  transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  flex-shrink: 0;
+}
+
+.bp-pin-circle:hover {
+  transform: scale(1.3);
+  border-color: #38bdf8;
+  background-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+.bp-pin-circle.connected {
+  background-color: #38bdf8;
+  border-color: #38bdf8;
+  box-shadow: 0 0 4px rgba(56, 189, 248, 0.4);
+}
+
+.bp-pin-circle.hovering {
+  border-color: #60a5fa;
+  background-color: #60a5fa;
+  transform: scale(1.35);
+}
+
+/* Node Parameters UI Container */
+.bp-node-params {
+  background: #11141b;
+  border-radius: 5px;
+  padding: 9px;
+  border: 1px solid #232733;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Parameter Block with Top Header & Slider */
+.bp-param-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bp-param-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.bp-param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  gap: 8px;
+}
+
+.bp-param-label {
+  color: #94a3b8;
+  font-weight: 550;
+  font-size: 11px;
+}
+
+.bp-param-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: #38bdf8;
+  background: #0d0f15;
+  border: 1px solid #222633;
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 36px;
+  text-align: right;
+  letter-spacing: 0.2px;
+}
+
+.bp-param-input {
+  background: #171a23;
+  border: 1px solid #2d3343;
+  color: #f1f5f9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s ease;
+}
+
+.bp-param-input:focus {
+  border-color: #38bdf8;
+}
+
+.bp-param-slider {
+  width: 100%;
+  margin: 2px 0 4px 0 !important;
+}
+
+/* Emoji Input Node Card */
+.bp-emoji-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #11141b;
+  border: 1px solid #242936;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.bp-emoji-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  background: #181c25;
+  border-radius: 5px;
+  padding: 2px;
+  border: 1px solid #262c3b;
+}
+
+.bp-emoji-info {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bp-emoji-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: 0.2px;
+}
+
+.bp-emoji-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 1px 5px;
+  border-radius: 3px;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* Output Node Preview Card */
+.bp-output-preview {
+  width: 100%;
+  height: 110px;
+  background: #0d0f14;
+  border-radius: 5px;
+  border: 1px solid #232733;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bp-output-preview canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Floating Blueprint Canvas Toolbar */
+.bp-floating-bar {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(23, 26, 35, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid #2f3547;
+  border-radius: 24px;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  z-index: 100;
+}
+
+.bp-btn-pill {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.14s ease;
+  font-family: var(--font-sans);
+}
+
+.bp-btn-pill:hover {
+  background-color: #272d3d;
+  color: #f8fafc;
+}
+
+.bp-btn-pill.primary {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.4);
+}
+
+.bp-btn-pill.primary:hover {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+/* Segmented Tabs for Node Properties */
+.bp-segmented-tabs {
+  display: flex;
+  background: #0f1218;
+  border: 1px solid #222633;
+  border-radius: 5px;
+  padding: 2px;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.bp-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #8b95a8;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  padding: 5px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.14s ease;
+  white-space: nowrap;
+}
+
+.bp-tab-btn:hover {
+  background: #1c202c;
+  color: #f1f5f9;
+}
+
+.bp-tab-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Connected Input Pin detachment visual cues */
+.bp-pin-circle[data-pin-type="input"].connected {
+  cursor: grab;
+}
+
+.bp-pin-circle[data-pin-type="input"].connected:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  transform: scale(1.3);
+}
+
+/* Dual Range Slider for Frame Interval (一个调节条两个调节端) */
+.bp-dual-range-container {
+  position: relative;
+  width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  margin: 8px 0 6px 0;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.bp-dual-range-track {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 6px;
+  transform: translateY(-50%);
+  background: #11141c;
+  border-radius: 4px;
+  border: 1px solid #242938;
+  pointer-events: none;
+}
+
+.bp-dual-range-highlight {
+  position: absolute;
+  top: 50%;
+  height: 6px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+  cursor: grab;
+  z-index: 1;
+  touch-action: none;
+}
+
+.bp-dual-range-highlight:hover {
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.bp-dual-range-highlight.dragging {
+  cursor: grabbing;
+  background: linear-gradient(90deg, #1d4ed8 0%, #0ea5e9 100%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+.bp-dual-range-handle {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.85);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  z-index: 2;
+  outline: none;
+  touch-action: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.bp-dual-range-handle:hover,
+.bp-dual-range-handle:focus-visible {
+  transform: translate(-50%, -50%) scale(1.25);
+  background: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.9), 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.bp-dual-range-handle:active,
+.bp-dual-range-handle.dragging {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.3);
+  background: #0284c7;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 1), 0 2px 8px rgba(0, 0, 0, 1);
+  z-index: 3;
+}
