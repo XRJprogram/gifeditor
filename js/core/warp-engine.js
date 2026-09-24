@@ -114,7 +114,7 @@ class WarpEngine {
     baseCtx.restore();
 
     // If no pixel-level warp is requested, return the transformed baseCanvas directly!
-    const needsPixelWarp = ['bulge', 'pinch', 'wave', 'twirl', 'skew'].includes(type);
+    const needsPixelWarp = ['lens', 'bulge', 'pinch', 'wave', 'twirl', 'skew'].includes(type);
     if (!needsPixelWarp) {
       return baseCanvas;
     }
@@ -143,15 +143,32 @@ class WarpEngine {
         let v = y;
 
         switch (type) {
-          case 'bulge': {
-            // Spherical bulge: pixels mapped closer to center
+          case 'lens': {
+            // Unified lens scaling:
+            // strength > 0 (0%~100%): Bulge 凸透镜膨胀 (power > 1, newRn < rn -> magnify center)
+            // strength === 0: Neutral 无变形 (power = 1, newRn = rn -> 1:1 original)
+            // strength < 0 (-100%~0%): Pinch 凹透镜收缩 (power < 1, newRn > rn -> shrink center)
             const dx = x - cx;
             const dy = y - cy;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < r && dist > 0) {
+            if (dist < r && dist > 0.0001) {
               const rn = dist / r;
-              // Spherical distortion formula
-              const factor = Math.pow(rn, 1 + strength * 1.5);
+              const power = Math.exp(strength * 1.35);
+              const factor = Math.pow(rn, power) / rn;
+              u = cx + dx * factor;
+              v = cy + dy * factor;
+            }
+            break;
+          }
+
+          case 'bulge': {
+            const dx = x - cx;
+            const dy = y - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < r && dist > 0.0001) {
+              const rn = dist / r;
+              const power = Math.exp(Math.abs(strength) * 1.35);
+              const factor = Math.pow(rn, power) / rn;
               u = cx + dx * factor;
               v = cy + dy * factor;
             }
@@ -159,13 +176,13 @@ class WarpEngine {
           }
 
           case 'pinch': {
-            // Pinch: pulls pixels from outside inward
             const dx = x - cx;
             const dy = y - cy;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < r && dist > 0) {
+            if (dist < r && dist > 0.0001) {
               const rn = dist / r;
-              const factor = Math.pow(rn, 1 / (1 + strength * 1.5));
+              const power = Math.exp(-Math.abs(strength) * 1.35);
+              const factor = Math.pow(rn, power) / rn;
               u = cx + dx * factor;
               v = cy + dy * factor;
             }

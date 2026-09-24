@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     graphModel.connections = [];
 
     const inNode = graphModel.addNode('input_emoji', 80, 140, { emojiId: '182' });
-    const warpNode = graphModel.addNode('warp_bulge', 380, 140, { strength: 65, radius: 60 });
+    const warpNode = graphModel.addNode('warp_lens', 380, 140, { scale: 65, radius: 60 });
     const frameNode = graphModel.addNode('frame_constraint', 680, 140, { maxFrames: 16 });
     const outNode = graphModel.addNode('output_export', 980, 140);
 

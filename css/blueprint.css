@@ -374,6 +374,98 @@
   width: fit-content;
 }
 
+/* Local File Input Node Card & Dropzone */
+.bp-file-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #11141b;
+  border: 1px solid #242936;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.bp-file-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  background: #181c25;
+  border-radius: 5px;
+  padding: 2px;
+  border: 1px solid #262c3b;
+  flex-shrink: 0;
+}
+
+.bp-file-info {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bp-file-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bp-file-tag {
+  font-size: 9.5px;
+  color: #94a3b8;
+}
+
+.bp-file-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #11141b;
+  border: 1.5px dashed #334155;
+  border-radius: 6px;
+  padding: 14px 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.bp-file-dropzone:hover,
+.bp-file-dropzone.dragover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.bp-file-drop-icon {
+  color: #64748b;
+  transition: color 0.18s;
+}
+
+.bp-file-dropzone:hover .bp-file-drop-icon,
+.bp-file-dropzone.dragover .bp-file-drop-icon {
+  color: #10b981;
+}
+
+.bp-file-drop-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.bp-file-drop-hint {
+  font-size: 9.5px;
+  color: #64748b;
+}
+
+/* Canvas Drag-over Highlighting */
+.blueprint-viewport.canvas-drag-over {
+  outline: 2px dashed #10b981;
+  outline-offset: -4px;
+}
+
 /* Output Node Preview Card */
 .bp-output-preview {
   width: 100%;

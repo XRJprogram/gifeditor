@@ -40,10 +40,15 @@ const NODE_DEFINITIONS = {
     inputs: [],
     outputs: [{ id: 'out_frames', name: '动图帧 (Frames)', type: 'frames' }],
     defaultParams: {
-      fileData: null
+      fileData: null,
+      fileName: '',
+      fileSize: 0
     },
     async execute(inputs, params) {
-      return { out_frames: params.fileData ? params.fileData.frames : [] };
+      if (!params.fileData || !params.fileData.frames || params.fileData.frames.length === 0) {
+        return { out_frames: [] };
+      }
+      return { out_frames: params.fileData.frames };
     }
   },
 
@@ -304,24 +309,52 @@ const NODE_DEFINITIONS = {
   },
 
   // --- 5. 变形 ---
-  'warp_bulge': {
-    type: 'warp_bulge',
-    title: '凸透镜局部膨胀',
-    subtitle: 'Bulge Distortion',
+  'warp_lens': {
+    type: 'warp_lens',
+    title: '透镜缩放',
+    subtitle: 'Lens Zoom (-100% ~ 100%)',
     category: 'WARP',
     inputs: [{ id: 'in_frames', name: '输入帧 (In)', type: 'frames' }],
     outputs: [{ id: 'out_frames', name: '变形帧 (Out)', type: 'frames' }],
     defaultParams: {
-      strength: 60,
+      scale: 50, // -100% to 100% (负为凹透镜收缩捏脸，正为凸透镜放大膨胀)
       radius: 65,
       centerX: 50,
       centerY: 50
     },
     async execute(inputs, params) {
       if (!inputs.in_frames) return { out_frames: [] };
+      const scaleVal = typeof params.scale !== 'undefined' ? params.scale : (typeof params.strength !== 'undefined' ? params.strength : 50);
       const cfg = {
-        type: 'bulge',
-        strength: (params.strength || 60) / 100,
+        type: 'lens',
+        strength: scaleVal / 100,
+        radius: params.radius || 65,
+        center: { x: (params.centerX || 50) / 100, y: (params.centerY || 50) / 100 }
+      };
+      return { out_frames: window.FunctionLibrary.warp(inputs.in_frames, cfg) };
+    }
+  },
+
+  'warp_bulge': {
+    type: 'warp_bulge',
+    title: '凸透镜局部膨胀',
+    subtitle: 'Bulge Distortion',
+    category: 'WARP',
+    isAlias: true,
+    inputs: [{ id: 'in_frames', name: '输入帧 (In)', type: 'frames' }],
+    outputs: [{ id: 'out_frames', name: '变形帧 (Out)', type: 'frames' }],
+    defaultParams: {
+      scale: 60,
+      radius: 65,
+      centerX: 50,
+      centerY: 50
+    },
+    async execute(inputs, params) {
+      if (!inputs.in_frames) return { out_frames: [] };
+      const scaleVal = typeof params.scale !== 'undefined' ? params.scale : (params.strength || 60);
+      const cfg = {
+        type: 'lens',
+        strength: scaleVal / 100,
         radius: params.radius || 65,
         center: { x: (params.centerX || 50) / 100, y: (params.centerY || 50) / 100 }
       };
@@ -334,19 +367,21 @@ const NODE_DEFINITIONS = {
     title: '凹透镜局部收缩',
     subtitle: 'Pinch Distortion',
     category: 'WARP',
+    isAlias: true,
     inputs: [{ id: 'in_frames', name: '输入帧 (In)', type: 'frames' }],
     outputs: [{ id: 'out_frames', name: '变形帧 (Out)', type: 'frames' }],
     defaultParams: {
-      strength: 60,
+      scale: -60,
       radius: 65,
       centerX: 50,
       centerY: 50
     },
     async execute(inputs, params) {
       if (!inputs.in_frames) return { out_frames: [] };
+      const scaleVal = typeof params.scale !== 'undefined' ? params.scale : -(params.strength || 60);
       const cfg = {
-        type: 'pinch',
-        strength: (params.strength || 60) / 100,
+        type: 'lens',
+        strength: scaleVal / 100,
         radius: params.radius || 65,
         center: { x: (params.centerX || 50) / 100, y: (params.centerY || 50) / 100 }
       };

@@ -198,6 +198,106 @@ class BlueprintCanvas {
 
     // Prevent context menu on canvas for smooth right-click panning
     this.container.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Drag-and-drop file directly from OS onto canvas
+    this.container.addEventListener('dragover', (e) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        this.container.classList.add('canvas-drag-over');
+      }
+    });
+
+    this.container.addEventListener('dragleave', (e) => {
+      if (e.relatedTarget === null || !this.container.contains(e.relatedTarget)) {
+        this.container.classList.remove('canvas-drag-over');
+      }
+    });
+
+    this.container.addEventListener('drop', async (e) => {
+      this.container.classList.remove('canvas-drag-over');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith('image/') || /\.(gif|png|jpe?g|webp|apng)$/i.test(file.name)) {
+          e.preventDefault();
+          e.stopPropagation();
+          const pt = this.screenToCanvas(e.clientX, e.clientY);
+          await this.handleImportFile(file, pt.x - 100, pt.y - 60);
+        }
+      }
+    });
+  }
+
+  async handleImportFile(file, x = 100, y = 100) {
+    try {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`正在解析本地图片: ${file.name}...`);
+      }
+      const buffer = await file.arrayBuffer();
+      const decoded = await window.GifDecoder.decode(buffer);
+      if (!decoded || !decoded.frames || decoded.frames.length === 0) {
+        throw new Error('未能从该文件中解析出有效图像帧');
+      }
+
+      const fileData = {
+        width: decoded.width,
+        height: decoded.height,
+        totalDuration: decoded.totalDuration,
+        frames: decoded.frames
+      };
+
+      const newNode = this.model.addNode('input_file', x, y, {
+        fileData,
+        fileName: file.name,
+        fileSize: file.size
+      });
+
+      if (typeof window.showToast === 'function') {
+        window.showToast(`已成功导入: ${file.name} (${decoded.frames.length} 帧, ${decoded.width}x${decoded.height})`);
+      }
+      return newNode;
+    } catch (err) {
+      console.error('导入本地文件失败:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`导入失败: ${err.message}`);
+      }
+      return null;
+    }
+  }
+
+  async loadFileForNode(node, file) {
+    try {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`正在解析本地图片: ${file.name}...`);
+      }
+      const buffer = await file.arrayBuffer();
+      const decoded = await window.GifDecoder.decode(buffer);
+      if (!decoded || !decoded.frames || decoded.frames.length === 0) {
+        throw new Error('未能从该文件中解析出有效图像帧');
+      }
+
+      const fileData = {
+        width: decoded.width,
+        height: decoded.height,
+        totalDuration: decoded.totalDuration,
+        frames: decoded.frames
+      };
+
+      this.model.updateNodeParams(node.id, {
+        fileData,
+        fileName: file.name,
+        fileSize: file.size
+      });
+      this.render(true);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`已载入: ${file.name} (${decoded.frames.length} 帧, ${decoded.width}x${decoded.height})`);
+      }
+    } catch (err) {
+      console.error('解析文件失败:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`解析文件失败: ${err.message}`);
+      }
+    }
   }
 
   selectNode(nodeId) {
@@ -418,6 +518,123 @@ class BlueprintCanvas {
 
       box.appendChild(card);
       box.appendChild(changeBtn);
+      return box;
+    }
+
+    if (node.type === 'input_file') {
+      const hasFile = !!(node.params.fileData && node.params.fileData.frames && node.params.fileData.frames.length > 0);
+      const fileName = node.params.fileName || '未选择文件';
+      const frameCount = hasFile ? node.params.fileData.frames.length : 0;
+      const dimensions = hasFile ? `${node.params.fileData.width}x${node.params.fileData.height}` : '';
+
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/gif,image/png,image/jpeg,image/webp,image/apng';
+      fileInput.style.display = 'none';
+      fileInput.onchange = async () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          await this.loadFileForNode(node, fileInput.files[0]);
+        }
+      };
+      box.appendChild(fileInput);
+
+      if (hasFile) {
+        const card = document.createElement('div');
+        card.className = 'bp-file-card';
+
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.className = 'bp-file-thumb';
+        thumbCanvas.width = 44;
+        thumbCanvas.height = 44;
+        const ctx = thumbCanvas.getContext('2d');
+        const firstCanvas = node.params.fileData.frames[0].canvas;
+        if (firstCanvas) {
+          ctx.drawImage(firstCanvas, 0, 0, 44, 44);
+        }
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'bp-file-info';
+        infoDiv.innerHTML = `
+          <div class="bp-file-name" title="${fileName}">${fileName}</div>
+          <div class="bp-file-tag">${frameCount} 帧 (${dimensions})</div>
+        `;
+
+        card.appendChild(thumbCanvas);
+        card.appendChild(infoDiv);
+
+        const changeBtn = document.createElement('button');
+        changeBtn.className = 'btn btn-sm btn-primary';
+        changeBtn.style.width = '100%';
+        changeBtn.style.justifyContent = 'center';
+        changeBtn.style.marginTop = '6px';
+        changeBtn.textContent = '更换图片 / GIF';
+        changeBtn.onclick = (e) => {
+          e.stopPropagation();
+          fileInput.click();
+        };
+
+        // Support drag and drop onto card
+        card.ondragover = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          card.style.borderColor = '#10b981';
+        };
+        card.ondragleave = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          card.style.borderColor = '#242936';
+        };
+        card.ondrop = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          card.style.borderColor = '#242936';
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            await this.loadFileForNode(node, e.dataTransfer.files[0]);
+          }
+        };
+
+        box.appendChild(card);
+        box.appendChild(changeBtn);
+      } else {
+        const dropzone = document.createElement('div');
+        dropzone.className = 'bp-file-dropzone';
+        dropzone.innerHTML = `
+          <svg class="bp-file-drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <div class="bp-file-drop-text">点击或拖入本地图片 / GIF</div>
+          <div class="bp-file-drop-hint">支持 GIF, APNG, PNG, JPG, WebP</div>
+        `;
+
+        dropzone.onclick = (e) => {
+          e.stopPropagation();
+          fileInput.click();
+        };
+
+        dropzone.ondragover = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('dragover');
+        };
+        dropzone.ondragleave = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('dragover');
+        };
+        dropzone.ondrop = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('dragover');
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            await this.loadFileForNode(node, e.dataTransfer.files[0]);
+          }
+        };
+
+        box.appendChild(dropzone);
+      }
+
       return box;
     }
 
@@ -895,22 +1112,56 @@ class BlueprintCanvas {
       return box;
     }
 
-    if (node.type === 'warp_bulge' || node.type === 'warp_pinch') {
+    if (node.type === 'warp_lens' || node.type === 'warp_bulge' || node.type === 'warp_pinch') {
+      const scaleVal = typeof node.params.scale !== 'undefined' ? node.params.scale : (typeof node.params.strength !== 'undefined' ? node.params.strength : 50);
+      const radiusVal = typeof node.params.radius !== 'undefined' ? node.params.radius : 65;
+
+      const formatScale = (v) => {
+        if (v > 0) return `+${v}% (膨胀)`;
+        if (v < 0) return `${v}% (收缩)`;
+        return `0% (无变形)`;
+      };
+
       box.innerHTML = `
         <div class="bp-param-block">
           <div class="bp-param-header">
-            <span class="bp-param-label">变形强度</span>
-            <span class="bp-param-val">${node.params.strength}%</span>
+            <span class="bp-param-label">透镜缩放 (-收缩 / +膨胀)</span>
+            <span class="bp-param-val" id="val_scale_${node.id}">${formatScale(scaleVal)}</span>
           </div>
-          <input type="range" class="bp-param-slider" min="10" max="100" value="${node.params.strength}">
+          <input type="range" class="bp-param-slider" id="slider_scale_${node.id}" min="-100" max="100" step="1" value="${scaleVal}">
+          <div style="display:flex; justify-content:space-between; font-size:9.5px; color:var(--text-muted); margin-top:2px;">
+            <span>-100% 收缩</span>
+            <span>0%</span>
+            <span>+100% 膨胀</span>
+          </div>
+        </div>
+
+        <div class="bp-param-block" style="margin-top:8px;">
+          <div class="bp-param-header">
+            <span class="bp-param-label">作用半径</span>
+            <span class="bp-param-val" id="val_radius_${node.id}">${radiusVal}px</span>
+          </div>
+          <input type="range" class="bp-param-slider" id="slider_radius_${node.id}" min="15" max="120" step="1" value="${radiusVal}">
         </div>
       `;
-      const slider = box.querySelector('input');
-      const valSpan = box.querySelector('.bp-param-val');
-      slider.oninput = (e) => {
-        valSpan.textContent = `${e.target.value}%`;
-        this.model.updateNodeParams(node.id, { strength: parseInt(e.target.value, 10) });
+
+      const sliderScale = box.querySelector(`#slider_scale_${node.id}`);
+      const valScale = box.querySelector(`#val_scale_${node.id}`);
+      const sliderRadius = box.querySelector(`#slider_radius_${node.id}`);
+      const valRadius = box.querySelector(`#val_radius_${node.id}`);
+
+      sliderScale.oninput = (e) => {
+        const v = parseInt(e.target.value, 10);
+        valScale.textContent = formatScale(v);
+        this.model.updateNodeParams(node.id, { scale: v, strength: v });
       };
+
+      sliderRadius.oninput = (e) => {
+        const v = parseInt(e.target.value, 10);
+        valRadius.textContent = `${v}px`;
+        this.model.updateNodeParams(node.id, { radius: v });
+      };
+
       return box;
     }
 
